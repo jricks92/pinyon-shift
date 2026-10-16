@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Setup on Linux and macOS accepts the Games on Demand release of the game,
+  whose re-signed executables and dashboard art are catalogued as a second
+  revision of the supported dump.
+
 ## 0.6.0 - 2026-10-17
 
 - Temporal FSR 2 and FSR 3 in OUTPUT SCALING, fed with depth, camera and
