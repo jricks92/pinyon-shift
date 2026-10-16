@@ -211,6 +211,13 @@ def enable_builtin_mods(state: Path) -> list[str]:
     file has no such key), so the game looks as before. Returns the mods
     enabled here."""
     config = state / "config" / "pinyon_shift.toml"
+    if not config.exists():
+        # The game writes this file on its first start, with the schema and
+        # the tuned graphics defaults. A file created here would have neither:
+        # the game would only prepend the schema and keep the compiled
+        # defaults (clear_memory_page_state on, re-uploading every page each
+        # frame). The mods are enabled on the next start instead.
+        return []
     mods = enabled_mods(config)
     added = []
     for marker in sorted((state / "mods").glob(f"*/{BUILTIN_MARKER}")):
@@ -219,13 +226,12 @@ def enable_builtin_mods(state: Path) -> list[str]:
         if mod in mods or not re.search(r"^always_enabled[ \t]*=[ \t]*true[ \t]*(#.*)?$", text,
                                         re.MULTILINE):
             continue
-        settings = config.read_text(encoding="utf-8") if config.exists() else ""
+        settings = config.read_text(encoding="utf-8")
         match = re.search(r"^off_settings[ \t]*=[ \t]*\[([^\]]*)\]", text, re.MULTILINE)
         for line in re.findall(r'"([A-Za-z0-9_]+[ \t]*=[^"]*)"', match.group(1) if match else ""):
             key = line.split("=", 1)[0].strip()
             if not re.search(rf"^{key}[ \t]*=", settings, re.MULTILINE):
                 settings = settings.rstrip("\n") + ("\n" if settings else "") + line + "\n"
-        config.parent.mkdir(parents=True, exist_ok=True)
         config.write_text(settings, encoding="utf-8", newline="\n")
         mods.append(mod)
         added.append(mod)

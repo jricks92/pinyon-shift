@@ -113,6 +113,31 @@ class BuildModPatchesTests(unittest.TestCase):
             # Not enabled by installing.
             self.assertFalse((state / "config" / "pinyon_shift.toml").exists())
 
+    def test_does_not_create_the_settings_file_before_the_games_first_start(self):
+        # The game writes pinyon_shift.toml with its schema and graphics
+        # defaults on the first start; a file created here would make it skip
+        # them (it only prepends the schema to a file without one), leaving
+        # clear_memory_page_state on. Enabling waits for the next start.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "builtin"
+            (source / "camera").mkdir(parents=True)
+            (source / "camera" / "mod.toml").write_text(
+                'name = "camera"\nalways_enabled = true\n'
+                'off_settings = ["camera_shake = 0.0"]\n', encoding="utf-8")
+            state = root / "state"
+            MODULE.install_builtin_mods(state, source)
+            self.assertEqual([], MODULE.enable_builtin_mods(state))
+            config = state / "config" / "pinyon_shift.toml"
+            self.assertFalse(config.exists())
+            # Once the game has written the file, the mod is enabled as before.
+            config.parent.mkdir(parents=True)
+            config.write_text("pinyon_shift_config_schema = 29\n", encoding="utf-8")
+            self.assertEqual(["camera"], MODULE.enable_builtin_mods(state))
+            text = config.read_text(encoding="utf-8")
+            self.assertIn('enabled_mods = "camera"', text)
+            self.assertIn("camera_shake = 0.0", text)
+
     def test_enables_always_enabled_builtin_mods(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

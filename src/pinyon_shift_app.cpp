@@ -223,32 +223,23 @@ bool EnsureSupportedConfig(const std::filesystem::path& path, bool& created,
   const std::regex schema_pattern(
       R"((?:^|\n)\s*pinyon_shift_config_schema\s*=\s*([0-9]+)\s*(?:#.*)?(?:\r?\n|$))");
   std::smatch match;
-  if (!std::regex_search(config_text, match, schema_pattern) || match.size() != 2) {
-    // A file without a schema line was rewritten by something that keeps
-    // only the settings it knows, such as the F4 settings overlay's save
-    // before it merged into the file (#345, #364). Its settings are current,
-    // so keep them under the current schema rather than refuse to start.
-    if (std::regex_search(config_text, std::regex(R"((?:^|\n)\s*pinyon_shift_config_schema\s*=)"))) {
-      return false;
-    }
-    std::filesystem::path backup = path;
-    backup += ".noschema.bak";
-    std::error_code backup_error;
-    std::filesystem::copy_file(path, backup, std::filesystem::copy_options::overwrite_existing,
-                               backup_error);
-    if (backup_error) {
-      return false;
-    }
-    const std::string repaired =
-        "pinyon_shift_config_schema = " + std::to_string(kConfigSchema) + "\n" + config_text;
-    if (!pinyon_shift::config::WriteAtomically(path, repaired)) {
-      return false;
-    }
-    migrated = true;
-    return true;
+  // A file without a schema line was written by something that keeps only
+  // the settings it knows: the F4 settings overlay's save before it merged
+  // into the file (#345, #364), or the built-in mods' installer before the
+  // game's first start, which left a five-line file with none of the
+  // graphics defaults, so clear_memory_page_state stayed on and every page
+  // the CPU uploaded was uploaded again each frame (the M1 drove at 8 fps).
+  // Its settings are current, so keep them, but take them through every
+  // migration and the defaults below as a schema 1 file would, rather than
+  // only prepending the schema or refusing to start.
+  const bool no_schema = !std::regex_search(config_text, match, schema_pattern) ||
+                         match.size() != 2;
+  if (no_schema && std::regex_search(config_text,
+                                     std::regex(R"((?:^|\n)\s*pinyon_shift_config_schema\s*=)"))) {
+    return false;
   }
   try {
-    const uint32_t schema = std::stoul(match[1].str());
+    const uint32_t schema = no_schema ? 1 : std::stoul(match[1].str());
     if (schema == kConfigSchema) {
       return true;
     }
@@ -263,19 +254,25 @@ bool EnsureSupportedConfig(const std::filesystem::path& path, bool& created,
     }
 
     std::filesystem::path backup = path;
-    backup += ".schema" + std::to_string(schema) + ".bak";
+    backup += no_schema ? std::string(".noschema.bak") : ".schema" + std::to_string(schema) + ".bak";
     std::error_code backup_error;
     std::filesystem::copy_file(path, backup,
-                               std::filesystem::copy_options::skip_existing,
+                               no_schema ? std::filesystem::copy_options::overwrite_existing
+                                         : std::filesystem::copy_options::skip_existing,
                                backup_error);
     if (backup_error && backup_error != std::errc::file_exists) {
       return false;
     }
 
     std::string migrated_text = config_text;
-    migrated_text.replace(static_cast<size_t>(match.position(1)),
-                          static_cast<size_t>(match.length(1)),
-                          std::to_string(kConfigSchema));
+    if (no_schema) {
+      migrated_text = "pinyon_shift_config_schema = " + std::to_string(kConfigSchema) + "\n" +
+                      migrated_text;
+    } else {
+      migrated_text.replace(static_cast<size_t>(match.position(1)),
+                            static_cast<size_t>(match.length(1)),
+                            std::to_string(kConfigSchema));
+    }
     const std::regex rejected_interpolation_pattern(
         R"((?:^|\n)\s*pinyon_shift_fh1_frame_interpolation\s*=\s*(?:true|false)\s*(?:#.*)?(?:\r?\n|$))",
         std::regex::icase);

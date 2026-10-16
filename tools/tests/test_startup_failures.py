@@ -26,15 +26,24 @@ class ConfigRepairTests(unittest.TestCase):
         self.assertIn("std::filesystem::rename(temporary, config_path)", save)
 
     def test_a_config_without_a_schema_is_repaired_and_kept(self):
+        # A file without a schema line (the F4 overlay's save, or the built-in
+        # mods' installer running before the game's first start) is backed up
+        # and migrated like a schema 1 file, so it also receives the graphics
+        # defaults (clear_memory_page_state off) instead of only the schema.
         app = read("src/pinyon_shift_app.cpp")
         check = app[app.index("bool EnsureSupportedConfig("):]
-        missing = check[check.index("if (!std::regex_search(config_text, match, schema_pattern)"):]
-        missing = missing[:missing.index("  try {")]
-        self.assertIn('".noschema.bak"', missing)
-        self.assertIn("WriteAtomically(path, repaired)", missing)
-        self.assertIn("migrated = true;", missing)
+        check = check[:check.index("\n}\n")]
+        self.assertIn("const bool no_schema = !std::regex_search(config_text, match, schema_pattern)",
+                      check)
+        self.assertIn('".noschema.bak"', check)
+        self.assertIn("no_schema ? 1 : std::stoul(match[1].str())", check)
+        self.assertIn('"pinyon_shift_config_schema = " + std::to_string(kConfigSchema) + "\\n" +',
+                      check)
+        self.assertIn('{"clear_memory_page_state", "clear_memory_page_state = false\\n"}', check)
+        self.assertIn("migrated = true;", check)
         # A schema line the pattern cannot read is still refused.
-        self.assertIn("return false;", missing)
+        refused = check[check.index("if (no_schema && std::regex_search(config_text,"):]
+        self.assertIn("return false;", refused[:refused.index("try {")])
 
 
 class ConfigUnavailableTests(unittest.TestCase):

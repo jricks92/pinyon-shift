@@ -5,6 +5,14 @@
 - Setup on Linux and macOS accepts the Games on Demand release of the game,
   whose re-signed executables and dashboard art are catalogued as a second
   revision of the supported dump.
+- A first start no longer loses the tuned graphics defaults. The built-in
+  mods' installer wrote a settings file without a schema before the game's
+  first start, so the game kept the compiled defaults, among them the
+  per-frame page-state refresh that re-uploads every CPU-written page each
+  frame; on an Apple M1 that was most of the frame (free roam at 8 fps, 131
+  ms a frame). The installer now leaves the file to the game, and a settings
+  file without a schema is migrated like a schema 1 file, so existing
+  installs receive the defaults on their next start.
 
 ## 0.6.0 - 2026-10-17
 
