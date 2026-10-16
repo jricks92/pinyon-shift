@@ -182,6 +182,8 @@ bool EnsureSupportedConfig(const std::filesystem::path& path, bool& created,
               "pinyon_shift_fh1_source_presentation = true\n"
               "anisotropic_override = -1\n"
               "present_effect = \"bilinear\"\n"
+              // Frame generation is opt-in (docs/FRAME_GENERATION.md).
+              "present_frame_generation = \"off\"\n"
               "swap_post_effect = \"none\"\n"
               "disable_bloom = true\n"
               "disable_motion_blur = true\n"
@@ -709,6 +711,8 @@ void PinyonShiftApp::OnPostInitLogging() {
                         {"anisotropic_override",
                          rex::cvar::GetFlagByName("anisotropic_override")},
                         {"swap_post_effect", rex::cvar::GetFlagByName("swap_post_effect")},
+                        {"present_frame_generation",
+                         rex::cvar::GetFlagByName("present_frame_generation")},
                         {"disable_bloom", rex::cvar::GetFlagByName("disable_bloom")},
                         {"disable_motion_blur",
                          rex::cvar::GetFlagByName("disable_motion_blur")},

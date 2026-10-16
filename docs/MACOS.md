@@ -105,3 +105,7 @@ were checked on the Mac mini. On 2026-10-15 the title update was imported from
 its ZIP and `pinyon.py title-update build` made `macos-arm64-v4` in about 4.5
 minutes after the base build; v4 started from `pinyon.py launch` with its
 profile backup, shader preparation and offline 1000 Club.
+
+Frame generation (docs/FRAME_GENERATION.md) is being built for the M1 with
+MetalFX frame interpolation, which needs macOS 26; it is off by default and
+has no measured result yet.
