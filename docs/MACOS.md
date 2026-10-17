@@ -106,6 +106,12 @@ its ZIP and `pinyon.py title-update build` made `macos-arm64-v4` in about 4.5
 minutes after the base build; v4 started from `pinyon.py launch` with its
 profile backup, shader preparation and offline 1000 Club.
 
-Frame generation (docs/FRAME_GENERATION.md) is being built for the M1 with
-MetalFX frame interpolation, which needs macOS 26; it is off by default and
-has no measured result yet.
+Frame generation (docs/FRAME_GENERATION.md) is on for the M1 with MetalFX
+frame interpolation, which needs macOS 26 and Apple silicon; it is off by
+default (F6 > DISPLAY > FRAME GENERATION). On the M1, at the game's 20 fps
+render limit so the generated frames fit the 60 Hz panel, free roam presents
+about 22 frames a second against 17 without it. MetalFX runs its own optical
+flow over the two finished frames, so no depth or motion vectors are plumbed;
+each generated frame costs about 7 ms of the GPU. The first version waits for
+the Metal work on the paint thread, so some real frames are dropped to make
+room; an asynchronous handoff is the next step.
