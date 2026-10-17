@@ -37,6 +37,9 @@ Up to 0.5.1, a `pinyon_shift.toml` without a `gpu_backend` line started the game
 ## "Could not build the mods' archive members"
 
 Before each start the launcher rebuilds the enabled mods' archives in `.local/preview/mods/zz-archive-patches`. When the mods haven't changed it keeps the previous copy; otherwise it replaces it, and a file still open elsewhere stops it with "is in use by another program". Wait for a game that is still closing, or for antivirus to finish scanning the folder, and start again. If it keeps happening, add the install folder to the antivirus exclusions.
+## The game starts but shows nothing (macOS)
+
+On a Mac that is low on memory (swap in use after a long session of other work, or a second copy of the game still running), the start can stall while the Vulkan pipeline cache in `.local/preview/cache/shaders` is read back; the runtime log then ends after "Initializing shader storage" with no frame. Quit it, make sure no other `pinyon_shift` process is running (Activity Monitor), and start again; it takes about two seconds on a machine with free memory. Deleting the cache file only costs one slower first drive while shaders are compiled again.
 
 ## The game runs on the wrong GPU
 
