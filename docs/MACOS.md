@@ -78,6 +78,11 @@ external drive.
 - **Free roam is too bright and flashes.** Fixed in ShiftGlue 6e3f434
   (2026-10-15): GPU memory tracking used 16 KB host pages, so CPU writes
   next to the 4 KB exposure resolve discarded it. It now tracks 4 KB pages.
+- **Black window for a while on the first start.** The game is building the
+  pipelines it saved from earlier sessions, and macOS compiles each one the
+  first time it sees a new build; a "LOADING SHADERS n / total" line at the
+  bottom of the window counts them (about 20 s for 600 on an M1). The next
+  start of the same build takes under a second.
 - **The build cannot find a compiler.** Run `xcode-select --install` in
   Terminal, or reinstall the Command Line Tools from Apple's developer site.
 

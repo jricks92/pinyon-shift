@@ -3,6 +3,7 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <thread>
 
 #include <rex/kernel/xam/ui_provider.h>
 #include <rex/ui/overlay/achievement_icon_cache.h>
@@ -66,6 +67,8 @@ class PinyonShiftApp final : public rex::ReXApp {
   // Creates the host UI and installs its XAM dialogs once presentation is
   // ready; UI thread.
   bool EnsureHostUi();
+  std::string ShaderCompileStatusText() const;
+  void StartShaderCompileStatusPoll();
   // NP-4.4 Hor+: the title's aspect for the window's (pinyon_shift_hor_plus).
   void UpdateHorPlus();
   // Under Hor+, present frames without the gameplay view 16:9 letterboxed.
@@ -92,6 +95,10 @@ class PinyonShiftApp final : public rex::ReXApp {
   // Created on first use: the presenter and input system it needs exist only
   // after runtime setup.
   std::unique_ptr<pinyon_shift::hostui::HostUi> host_ui_;
+  // Repaints the host UI while the renderer compiles shaders and holds
+  // frames back, so the status line above updates on a black screen.
+  std::thread shader_status_poll_;
+  std::atomic_bool shader_status_poll_stop_{false};
   // The XAM message box and keyboard drawn by host_ui_ (NP-5.2).
   std::unique_ptr<rex::kernel::xam::XamUiProvider> xam_dialogs_;
   // Achievement icons for the unlock toast (the title's XDBF images).
